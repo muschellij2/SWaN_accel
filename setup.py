@@ -17,8 +17,8 @@ setuptools.setup(
     ],
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
-    install_requires=['scikit-learn>=0.23.2'],
-    package_data={'SWaN_accel':['StandardScalar_all_data.sav','LogisticRegression_all_data_F1score_0.70.sav']},
+    install_requires=['scikit-learn==0.23.2'],
+    package_data={['StandardScalar_all_data.sav','LogisticRegression_all_data_F1score_0.70.sav']},
 
     include_package_data=True
 )
