@@ -527,7 +527,16 @@ def daterange(date1, date2):
     for n in range(int((date2 - date1).days) + 1):
         yield date1 + timedelta(n)
 
-def correctPredictionsSingleDate(folder, dStr, mode):
+def get_outpath(folder, dStr, mode):
+    outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_final.csv')
+
+    if mode == 'Yes':
+        outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_debug.csv')
+    else:
+        outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_final.csv')
+    return outPath
+
+def createDataFrameFromFolder(folder, dStr, mode):
     dObj = datetime.datetime.strptime(dStr, "%Y-%m-%d")
 
     prev = dObj - datetime.timedelta(days=1)
@@ -571,20 +580,43 @@ def correctPredictionsSingleDate(folder, dStr, mode):
         print('No prediction data in the folder: '+folder +' for data: ' + dStr)
         return
 
-    outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_final.csv')
+    return oriDF
+
+def correctPredictionsSingleDate(folder, dStr, mode):
+    oriDF = createDataFrameFromFolder(folder, dStr, mode)
+    oriDF = correctPredictionsDataFrame(oriDF)
+    outPath = get_outpath(folder,dStr,mode)
+
+    currDateObj = datetime.datetime.strptime(dStr, "%Y-%m-%d")
+    nextDateObj = currDateObj + datetime.timedelta(days=1)
+
+    mask = (oriDF['HEADER_TIME_STAMP'] > currDateObj) & (oriDF['HEADER_TIME_STAMP'] < nextDateObj)
 
     if mode == 'Yes':
-        outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_debug.csv')
+        final_df = oriDF
     else:
-        outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_final.csv')
+        final_df = oriDF.loc[mask][
+            ['START_TIME', 'STOP_TIME', 'PREDICTION', 'PROB_WEAR_SMOOTH', 'PROB_SLEEP_SMOOTH', 'PROB_NWEAR_SMOOTH']]
 
+    print(datetime.datetime.now().strftime("%H:%M:%S") + " Finished performing rule-based filtering.")
+
+    final_df.to_csv(outPath, index=False, float_format='%.3f', compression='infer')
+
+def correctPredictionsDataFrame(df):
+    oriDF = df
+    del df;
+    if oriDF.dropna().empty:
+        print('No prediction data in the dataframe')
+        return
+
+    oriDF.sort_values(by='HEADER_TIME_STAMP', inplace=True)
+    oriDF.reset_index(drop=True,inplace=True)
     oriDF.replace({'PREDICTED': {2: 1}}, inplace=True)
     oriDF['PREDICTED_SMOOTH'] = None
     oriDF['PROB_WEAR_SMOOTH'] = None
     oriDF['PROB_SLEEP_SMOOTH'] = None
     oriDF['PROB_NWEAR_SMOOTH'] = None
     tmp_ar = oriDF['PREDICTED'].values
-
 
     # compute contigous bouts based on window-level prediction
     obout_array = contigous_regions(tmp_ar)
@@ -622,23 +654,10 @@ def correctPredictionsSingleDate(folder, dStr, mode):
         # l_f_odf = lookBeforeAfter(f_odf)
         # l_f_odf.to_csv(outPath, index=False, float_format='%.3f')
 
-    currDateObj = datetime.datetime.strptime(dStr, "%Y-%m-%d")
-    nextDateObj = currDateObj + datetime.timedelta(days=1)
+    oriDF.rename(columns={'PREDICTED_SMOOTH':'PREDICTION'}, inplace=True)
+    oriDF['PREDICTION'].replace({0:'Wear',1:'Sleep',2:'Nonwear'}, inplace=True)
+    return oriDF
 
-    mask = (oriDF['HEADER_TIME_STAMP'] > currDateObj) & (oriDF['HEADER_TIME_STAMP'] < nextDateObj)
-
-    if mode == 'Yes':
-        final_df = oriDF
-    else:
-        final_df = oriDF.loc[mask][
-            ['START_TIME', 'STOP_TIME', 'PREDICTED_SMOOTH', 'PROB_WEAR_SMOOTH', 'PROB_SLEEP_SMOOTH', 'PROB_NWEAR_SMOOTH']]
-
-    final_df.rename(columns={'PREDICTED_SMOOTH':'PREDICTION'}, inplace=True)
-    final_df['PREDICTION'].replace({0:'Wear',1:'Sleep',2:'Nonwear'}, inplace=True)
-
-    print(datetime.datetime.now().strftime("%H:%M:%S") + " Finished performing rule-based filtering.")
-
-    final_df.to_csv(outPath, index=False, float_format='%.3f', compression='infer')
 
 def main(day_folder=None, debug='No'):
     if (day_folder is None):
@@ -663,3 +682,4 @@ def main(day_folder=None, debug='No'):
         return
 
     correctPredictionsSingleDate(inFold,dateSt,debug)
+
