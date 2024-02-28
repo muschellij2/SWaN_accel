@@ -575,7 +575,7 @@ def createDataFrameFromFolder(folder, dStr, mode):
 
 def correctPredictionsSingleDate(folder, dStr, mode):
     oriDF = createDataFrameFromFolder(folder, dStr, mode)
-    oriDF = correctPredictionsDataFrame(oriDF)
+    oriDF = correct_nonwear_predictions(oriDF)
     if mode == 'Yes':
         outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_debug.csv')
     else:
@@ -596,7 +596,7 @@ def correctPredictionsSingleDate(folder, dStr, mode):
 
     final_df.to_csv(outPath, index=False, float_format='%.3f', compression='infer')
 
-def correctPredictionsDataFrame(df):
+def correct_nonwear_predictions(df):
     oriDF = df
     del df;
     if oriDF.dropna().empty:

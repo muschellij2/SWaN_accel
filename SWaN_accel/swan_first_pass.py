@@ -17,10 +17,10 @@ def get_feature_sleep(tdf, sampling):
     return result_axes
 
 
-def main(df=None, file_path=None,sampling_rate=None):
+def first_pass_nonwear(df=None, sampling_rate=None):
 
-    if(df is None) or (file_path is None) or (sampling_rate is None):
-        print("One or all input arguments missing.")
+    if(df is None) or (sampling_rate is None):
+        print("Data Frame or sampling_rate is missing")
         return
 
     try:
@@ -66,7 +66,13 @@ def main(df=None, file_path=None,sampling_rate=None):
     final_feature_df['PROB_WEAR'] = prediction_prob[:, 0]
     final_feature_df['PROB_SLEEP'] = prediction_prob[:, 1]
     final_feature_df['PROB_NWEAR'] = prediction_prob[:, 2]
+    return final_feature_df
 
+def main(df=None, file_path=None,sampling_rate=None):
+    if(df is None) or (file_path is None) or (sampling_rate is None):
+        print("One or all input arguments missing.")
+        return
+    final_feature_df = first_pass_nonwear(df = df, sampling_rate = sampling_rate)
     final_feature_df.to_csv(file_path, index=False, float_format="%.3f", compression='infer')
     print("Created prediction file:" + file_path)
 
