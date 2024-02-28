@@ -528,8 +528,6 @@ def daterange(date1, date2):
         yield date1 + timedelta(n)
 
 def get_outpath(folder, dStr, mode):
-    outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_final.csv')
-
     if mode == 'Yes':
         outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_debug.csv')
     else:
