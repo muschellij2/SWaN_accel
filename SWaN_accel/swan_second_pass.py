@@ -527,13 +527,6 @@ def daterange(date1, date2):
     for n in range(int((date2 - date1).days) + 1):
         yield date1 + timedelta(n)
 
-def get_outpath(folder, dStr, mode):
-    if mode == 'Yes':
-        outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_debug.csv')
-    else:
-        outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_final.csv')
-    return outPath
-
 def createDataFrameFromFolder(folder, dStr, mode):
     dObj = datetime.datetime.strptime(dStr, "%Y-%m-%d")
 
@@ -583,7 +576,10 @@ def createDataFrameFromFolder(folder, dStr, mode):
 def correctPredictionsSingleDate(folder, dStr, mode):
     oriDF = createDataFrameFromFolder(folder, dStr, mode)
     oriDF = correctPredictionsDataFrame(oriDF)
-    outPath = get_outpath(folder,dStr,mode)
+    if mode == 'Yes':
+        outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_debug.csv')
+    else:
+        outPath = os.path.join(folder, dStr, 'SWaN_' + dStr + '_final.csv')
 
     currDateObj = datetime.datetime.strptime(dStr, "%Y-%m-%d")
     nextDateObj = currDateObj + datetime.timedelta(days=1)
